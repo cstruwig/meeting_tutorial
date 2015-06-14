@@ -118,6 +118,18 @@ CREATE TABLE api_list_value (
   KEY list_id (list_id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Config - list values';
 
+DROP TABLE IF EXISTS api_contact;
+CREATE TABLE api_contact (
+  id INT(3) NOT NULL AUTO_INCREMENT,
+  contact_name VARCHAR(300) NOT NULL,
+  contact_no VARCHAR(30) NOT NULL,
+  user_id INT(3) NULL,
+  active BOOL DEFAULT 1,  
+  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  PRIMARY KEY (id),
+  KEY user_id (user_id)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Config - app contacts';
+
 DROP PROCEDURE IF EXISTS api_add_token;
 
 DELIMITER $api_add_token
