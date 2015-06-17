@@ -96,6 +96,29 @@ CREATE TABLE api_user_role (
   KEY user_id (user_id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - users and ther roles';
 
+DROP TABLE IF EXISTS api_meeting;
+CREATE TABLE api_meeting (
+  id INT(10) NOT NULL AUTO_INCREMENT,
+  user_id INT(10) NOT NULL, -- meeting creator
+  group_id INT(10) NOT NULL,
+  description VARCHAR(100) NOT NULL,
+  start_date DATETIME,
+  active BOOL DEFAULT 1,  
+  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  PRIMARY KEY (id)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - meeting';
+
+DROP TABLE IF EXISTS api_meeting_attendence;
+CREATE TABLE api_meeting_attendence (
+  id INT(10) NOT NULL AUTO_INCREMENT,
+  meeting_id INT(10) NOT NULL,
+  user_id INT(10) NOT NULL,
+  attended BOOL DEFAULT 0,
+  active BOOL DEFAULT 1,  
+  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  PRIMARY KEY (id)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - meeting attendence';
+
 DROP TABLE IF EXISTS api_list;
 CREATE TABLE api_list (
   id INT(10) NOT NULL AUTO_INCREMENT,
@@ -578,6 +601,84 @@ END $api_get_user_by_role
 
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS api_get_meeting;
+
+DELIMITER $api_get_meeting
+
+CREATE PROCEDURE api_get_meeting(_page INT, _size INT)
+procedure_block:BEGIN
+
+  SET _page := IF(_page = -1, 0, _page);
+  SET _size := IF(_size = -1, 1000, _size);
+
+  SELECT *
+  FROM api_meeting
+  WHERE active = 1
+  ORDER BY 2
+  LIMIT _page, _size;
+  
+END $api_get_meeting
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS api_get_meeting_by_id;
+
+DELIMITER $api_get_meeting_by_id
+
+CREATE PROCEDURE api_get_meeting_by_id(_id INT)
+procedure_block:BEGIN
+
+  SELECT *
+  FROM api_meeting
+  WHERE id = _id
+  ORDER BY 2;
+  
+END $api_get_meeting_by_id
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS api_find_meeting_by_user_id;
+
+DELIMITER $api_find_meeting_by_user_id
+
+CREATE PROCEDURE api_find_meeting_by_user_id(_user_id INT, _page INT, _size INT)
+procedure_block:BEGIN
+
+  SET _page := IF(_page = -1, 0, _page);
+  SET _size := IF(_size = -1, 1000, _size);
+
+  SELECT *
+  FROM api_meeting
+  WHERE user_id = _user_id
+  AND active = 1
+  ORDER BY 2
+  LIMIT _page, _size;
+  
+END $api_find_meeting_by_user_id
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS api_find_meeting_by_description;
+
+DELIMITER $api_find_meeting_by_description
+
+CREATE PROCEDURE api_find_meeting_by_description(_description VARCHAR(100), _page INT, _size INT)
+procedure_block:BEGIN
+
+  SET _page := IF(_page = -1, 0, _page);
+  SET _size := IF(_size = -1, 1000, _size);
+
+  SELECT *
+  FROM api_meeting
+  WHERE LCASE(description) LIKE CONCAT('%', LCASE(_description), '%')
+  AND active = 1
+  ORDER BY 2
+  LIMIT _page, _size;
+  
+END $api_find_meeting_by_description
+
+DELIMITER ;
+
 INSERT INTO api_token (user_id, token, date_added) VALUES (1, UUID(), '2222-01-01');
 
 INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no) VALUES ('admin', PASSWORD('nimda'), 'Andre', 'address line ONE', 'address line TWO', 'address CITY', 1, 'cell NO');
@@ -617,13 +718,14 @@ INSERT INTO api_list_value (list_id, list_value, list_option) VALUES (1, 'WC', '
 
 INSERT INTO api_group (group_name, address_line1, address_line2, address_city, address_province_code, facilitator_id)  VALUES ('ONE GROUP TO rule them ALL', 'address line ONE', 'address line TWO', 'address CITY', 'LI', 1);
 
-    
 INSERT INTO api_user_group (user_id, group_id) VALUES (1, 1);
 
 INSERT INTO api_contact (contact_name, contact_no) VALUES ('example contact 1', '012 345 6789');
 INSERT INTO api_contact (contact_name, contact_no) VALUES ('example contact 2', '012 345 2222');
 INSERT INTO api_contact (contact_name, contact_no) VALUES ('example contact 3', '012 345 3333');
 
-INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 1', 'http://fzs.sve-mo.ba/sites/default/files/dokumenti-vijesti/sample.pdf');
+INSERT INTO api_meeting (user_id, group_id, description, start_date) VALUES (1, 1, 'Test Meeting', '2015-07-01');
+
+INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 1', 'http://fzs.sve-mo.ba/sites/DEFAULT/files/dokumenti-vijesti/sample.pdf');
 INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 2', 'http://www.snee.com/xml/xslt/sample.doc');
 INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 3', 'https://www.burningwheel.com/store/media/catalog/product/cache/1/image/9df78eab33525d08d6e5fb8d27136e95/t/a/tableofcontents.jpg');
