@@ -10,6 +10,7 @@ CREATE TABLE api_user (
   address_city VARCHAR(200) NOT NULL,
   address_province_code VARCHAR(5) NOT NULL,
   cell_no VARCHAR(50) NOT NULL,  
+  card_no VARCHAR(50) NULL,  
   active BOOL DEFAULT 1,
   date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -519,7 +520,8 @@ procedure_block:BEGIN
     U.address_line2,
     U.address_city,
     U.address_province_code, 
-    U.cell_no
+    U.cell_no,
+    U.card_no
   FROM api_user U
 /*   JOIN api_user_role UR
     ON U.id = UR.user_id AND U.active = 1
@@ -535,12 +537,12 @@ DROP PROCEDURE IF EXISTS api_add_user;
 
 DELIMITER $api_add_user
 
-CREATE PROCEDURE api_add_user (_user_name VARCHAR(20), _password VARCHAR(100), _full_name VARCHAR(200), _address_line1 VARCHAR(200), _address_line2 VARCHAR(200), _address_city VARCHAR(200), _address_province_code VARCHAR(5), _cell_no VARCHAR(50))
+CREATE PROCEDURE api_add_user (_user_name VARCHAR(20), _password VARCHAR(100), _full_name VARCHAR(200), _address_line1 VARCHAR(200), _address_line2 VARCHAR(200), _address_city VARCHAR(200), _address_province_code VARCHAR(5), _cell_no VARCHAR(50), _card_no VARCHAR(50))
 
 procedure_block:BEGIN
 
-  INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no)
-  VALUES (_user_name, PASSWORD(_password), _full_name, _address_line1, _address_line2, _address_city, _address_province_code, _cell_no);
+  INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no, card_no)
+  VALUES (_user_name, PASSWORD(_password), _full_name, _address_line1, _address_line2, _address_city, _address_province_code, _cell_no, _card_no);
   
   CALL api_get_user_by_id(LAST_INSERT_ID());
  
@@ -552,7 +554,7 @@ DROP PROCEDURE IF EXISTS api_update_user;
 
 DELIMITER $api_update_user
 
-CREATE PROCEDURE api_update_user (_id INT(10), _password VARCHAR(100), _full_name VARCHAR(200), _address_line1 VARCHAR(200), _address_line2 VARCHAR(200), _address_city VARCHAR(200), _address_province_code VARCHAR(5), _cell_no VARCHAR(50))
+CREATE PROCEDURE api_update_user (_id INT(10), _password VARCHAR(100), _full_name VARCHAR(200), _address_line1 VARCHAR(200), _address_line2 VARCHAR(200), _address_city VARCHAR(200), _address_province_code VARCHAR(5), _cell_no VARCHAR(50), card_no VARCHAR(50))
 
 procedure_block:BEGIN
 
@@ -563,7 +565,8 @@ procedure_block:BEGIN
   address_line2 := IFNULL(_address_line2, address_line2), 
   address_city := IFNULL(_address_city, address_city),
   address_province_code := IFNULL(_address_province_code, address_province_code),
-  cell_no := IFNULL(_cell_no, cell_no)
+  cell_no := IFNULL(_cell_no, cell_no),
+  card_no := IFNULL(_card_no, card_no)
   WHERE id = _id;
   
   CALL api_get_user_by_id(_id);
@@ -589,7 +592,8 @@ procedure_block:BEGIN
     U.address_line2,
     U.address_city,
     U.address_province_code, 
-    U.cell_no
+    U.cell_no,
+    U.card_no
   FROM api_user U
   JOIN api_user_role UR
     ON U.id = UR.user_id AND U.active = 1
