@@ -260,6 +260,7 @@ procedure_block:BEGIN
   LEFT JOIN api_host H
     ON (LCASE(H.host_name) = LCASE(_hostName))
   WHERE (U.user_name = _userName AND U.password = PASSWORD(_password))
+  AND U.active = 1
   ORDER BY T.date_added DESC
   LIMIT 1;
   
@@ -285,7 +286,7 @@ procedure_block:BEGIN
     
   /* at this point we verified the credentials and the host so a new token must be generated */
   SET token := UUID();
-  INSERT INTO api_tokens (user_id, token, date_added)
+  INSERT INTO api_token (user_id, token, date_added)
   VALUES (user_id, token, NOW());
     
   /* return new token */
@@ -554,7 +555,7 @@ DROP PROCEDURE IF EXISTS api_update_user;
 
 DELIMITER $api_update_user
 
-CREATE PROCEDURE api_update_user (_id INT(10), _password VARCHAR(100), _full_name VARCHAR(200), _address_line1 VARCHAR(200), _address_line2 VARCHAR(200), _address_city VARCHAR(200), _address_province_code VARCHAR(5), _cell_no VARCHAR(50), card_no VARCHAR(50))
+CREATE PROCEDURE api_update_user (_id INT(10), _password VARCHAR(100), _full_name VARCHAR(200), _address_line1 VARCHAR(200), _address_line2 VARCHAR(200), _address_city VARCHAR(200), _address_province_code VARCHAR(5), _cell_no VARCHAR(50), _card_no VARCHAR(50))
 
 procedure_block:BEGIN
 
