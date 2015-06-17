@@ -130,6 +130,79 @@ CREATE TABLE api_contact (
   KEY user_id (user_id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Config - app contacts';
 
+DROP TABLE IF EXISTS api_publication;
+CREATE TABLE api_publication (
+  id INT(3) NOT NULL AUTO_INCREMENT,
+  group_id INT NOT NULL,
+  description VARCHAR(300) NOT NULL,
+  source VARCHAR(300) NOT NULL,
+  active BOOL DEFAULT 1,  
+  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  PRIMARY KEY (id),
+  KEY group_id (group_id)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Config - grpup publications';
+
+DROP PROCEDURE IF EXISTS api_get_contact;
+
+DELIMITER $api_get_contact
+CREATE PROCEDURE api_get_contact (_page INT, _size INT)
+procedure_block:BEGIN
+
+  SET _page := IF(_page = -1, 0, _page);
+  SET _size := IF(_size = -1, 1000, _page);
+  
+  SELECT contact_name, contact_no
+  FROM api_contact
+  WHERE active = 1
+  ORDER BY 1
+  LIMIT _page, _size;
+
+END $api_get_contact
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS api_get_publication;
+
+DELIMITER $api_get_publication
+CREATE PROCEDURE api_get_publication (_page INT, _size INT)
+procedure_block:BEGIN
+
+  SET _page := IF(_page = -1, 0, _page);
+  SET _size := IF(_size = -1, 1000, _page);
+  
+  SELECT P.description, P.source, G.group_name
+  FROM api_publication P
+  JOIN api_group G
+  ON G.id = P.group_id
+  WHERE P.active = 1
+  ORDER BY P.description
+  LIMIT _page, _size;
+
+END $api_get_publication
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS api_find_publication_by_group_id;
+
+DELIMITER $api_find_publication_by_group_id
+CREATE PROCEDURE api_find_publication_by_group_id (_group_id INT, _page INT, _size INT)
+procedure_block:BEGIN
+
+  SET _page := IF(_page = -1, 0, _page);
+  SET _size := IF(_size = -1, 1000, _page);
+  
+  SELECT P.description, P.source, G.group_name
+  FROM api_publication P
+  JOIN api_group G
+  ON G.id = P.group_id AND P.group_id = _group_id
+  WHERE P.active = 1
+  ORDER BY P.description
+  LIMIT _page, _size;
+  
+END $api_find_publication_by_group_id
+
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS api_add_token;
 
 DELIMITER $api_add_token
@@ -325,6 +398,45 @@ END $api_add_group
 
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS api_update_group;
+
+DELIMITER $api_update_group
+
+CREATE PROCEDURE api_update_group (_id INT, _group_name VARCHAR(100), _address_line1 VARCHAR(200), _address_line2 VARCHAR(200), _address_city VARCHAR(200), _address_province_code VARCHAR(5), _facilitator_id INT)
+
+procedure_block:BEGIN
+
+  UPDATE api_group
+  SET group_name = IFNULL(_group_name, group_name),
+  address_line1 = IFNULL(_address_line1, address_line1),
+  address_line2 = IFNULL(_address_line2, address_line2),
+  address_city = IFNULL(_address_city, address_city),
+  address_province_code = IFNULL(_address_province_code, address_province_code),
+  facilitator_id = IFNULL(_facilitator_id, facilitator_id)
+  WHERE id = _id;
+  
+  CALL api_get_group_by_id(id);
+ 
+END $api_update_group
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS api_delete_group;
+
+DELIMITER $api_delete_group
+
+CREATE PROCEDURE api_delete_group (_id INT)
+
+procedure_block:BEGIN
+
+  UPDATE api_group
+  SET active = 0
+  WHERE id = _id;
+ 
+END $api_delete_group
+
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS api_get_list_by_name;
 
 DELIMITER $api_get_list_by_name
@@ -335,7 +447,7 @@ procedure_block:BEGIN
   SET _page := IF(_page = -1, 0, _page);
   SET _size := IF(_size = -1, 1000, _page);
 
-  SELECT V.list_value value, V.list_option text
+  SELECT V.list_value VALUE, V.list_option TEXT
   FROM api_list L
   JOIN api_list_value V
   ON (V.list_id = L.id AND L.active = 1 AND V.active = 1)
@@ -384,6 +496,7 @@ INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_lin
 INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no) VALUES ('hardus', PASSWORD('hardus'), 'Hardus van der Berg', '486 de jonge str', 'elarduspark', 'PTA', 3, '0716718133');
 
 INSERT INTO api_host (user_id, host_name) VALUES (1, '127.0.0.1:3001');
+INSERT INTO api_host (user_id, host_name) VALUES (1, 'localhost:3001');
 INSERT INTO api_host (user_id, host_name) VALUES (1, 'localhost:8100');
 
 INSERT INTO api_role (description) VALUES ('Administrator');
@@ -417,3 +530,11 @@ INSERT INTO api_group (group_name, address_line1, address_line2, address_city, a
 
     
 INSERT INTO api_user_group (user_id, group_id) VALUES (1, 1);
+
+INSERT INTO api_contact (contact_name, contact_no) VALUES ('example contact 1', '012 345 6789');
+INSERT INTO api_contact (contact_name, contact_no) VALUES ('example contact 2', '012 345 2222');
+INSERT INTO api_contact (contact_name, contact_no) VALUES ('example contact 3', '012 345 3333');
+
+INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 1', 'http://fzs.sve-mo.ba/sites/default/files/dokumenti-vijesti/sample.pdf');
+INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 2', 'http://www.snee.com/xml/xslt/sample.doc');
+INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 3', 'https://www.burningwheel.com/store/media/catalog/product/cache/1/image/9df78eab33525d08d6e5fb8d27136e95/t/a/tableofcontents.jpg');
