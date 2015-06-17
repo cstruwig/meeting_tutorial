@@ -459,6 +459,73 @@ END $api_get_list_by_name
 
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS api_get_user_by_id;
+
+DELIMITER $api_get_user_by_id
+
+CREATE PROCEDURE api_get_user_by_id (_id INT)  
+procedure_block:BEGIN
+
+  SELECT
+    U.id,
+    U.full_name,
+    U.address_line1,
+    U.address_line2,
+    U.address_city,
+    U.address_province_code, 
+    U.cell_no
+  FROM api_user U
+/*   JOIN api_user_role UR
+    ON U.id = UR.user_id AND U.active = 1
+  JOIN api_role R
+    ON R.id = UR.role_id  AND R.active = 1 */
+  WHERE U.id = _id;
+  
+END $api_get_user_by_id
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS api_add_user;
+
+DELIMITER $api_add_user
+
+CREATE PROCEDURE api_add_user (_user_name VARCHAR(20), _password VARCHAR(100), _full_name VARCHAR(200), _address_line1 VARCHAR(200), _address_line2 VARCHAR(200), _address_city VARCHAR(200), _address_province_code VARCHAR(5), _cell_no VARCHAR(50))
+
+procedure_block:BEGIN
+
+  INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no)
+  VALUES (_user_name, PASSWORD(_password), _full_name, _address_line1, _address_line2, _address_city, _address_province_code, _cell_no);
+  
+  CALL api_get_user_by_id(LAST_INSERT_ID());
+ 
+END $api_add_user
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS api_update_user;
+
+DELIMITER $api_update_user
+
+CREATE PROCEDURE api_update_user (_id INT(10), _password VARCHAR(100), _full_name VARCHAR(200), _address_line1 VARCHAR(200), _address_line2 VARCHAR(200), _address_city VARCHAR(200), _address_province_code VARCHAR(5), _cell_no VARCHAR(50))
+
+procedure_block:BEGIN
+
+  UPDATE api_user
+  SET PASSWORD := IFNULL(PASSWORD(_password), PASSWORD), 
+  full_name := IFNULL(_full_name, full_name), 
+  address_line1 := IFNULL(_address_line1, address_line1), 
+  address_line2 := IFNULL(_address_line2, address_line2), 
+  address_city := IFNULL(_address_city, address_city),
+  address_province_code := IFNULL(_address_province_code, address_province_code),
+  cell_no := IFNULL(_cell_no, cell_no)
+  WHERE id = _id;
+  
+  CALL api_get_user_by_id(_id);
+ 
+END $api_update_user
+
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS api_get_user_by_role;
 
 DELIMITER $api_get_user_by_role
@@ -497,6 +564,7 @@ INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_lin
 
 INSERT INTO api_host (user_id, host_name) VALUES (1, '127.0.0.1:3001');
 INSERT INTO api_host (user_id, host_name) VALUES (1, 'localhost:3001');
+INSERT INTO api_host (user_id, host_name) VALUES (1, 'nutshell.does-it.net:3001');
 INSERT INTO api_host (user_id, host_name) VALUES (1, 'localhost:8100');
 
 INSERT INTO api_role (description) VALUES ('Administrator');
