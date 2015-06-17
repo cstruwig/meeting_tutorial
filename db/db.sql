@@ -724,6 +724,23 @@ END $api_add_meeting
 
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS api_delete_meeting;
+
+DELIMITER $api_delete_meeting
+
+CREATE PROCEDURE api_delete_meeting(_id INT)
+procedure_block:BEGIN
+  
+  UPDATE api_meeting
+  SET active = 0
+  WHERE id = _id;
+  
+  CALL api_get_meeting_by_id(_id);
+  
+END $api_delete_meeting
+
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS api_update_meeting_attendance;
 
 DELIMITER $api_update_meeting_attendance
