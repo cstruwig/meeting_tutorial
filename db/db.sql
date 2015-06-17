@@ -102,6 +102,7 @@ CREATE TABLE api_meeting (
   user_id INT(10) NOT NULL, -- meeting creator
   group_id INT(10) NOT NULL,
   description VARCHAR(100) NOT NULL,
+  location VARCHAR(200) NOT NULL,
   start_date DATETIME,
   active BOOL DEFAULT 1,  
   date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
@@ -116,7 +117,8 @@ CREATE TABLE api_meeting_attendence (
   attended BOOL DEFAULT 0,
   active BOOL DEFAULT 1,  
   date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  KEY meeting_id (meeting_id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - meeting attendence';
 
 DROP TABLE IF EXISTS api_list;
@@ -628,9 +630,15 @@ DELIMITER $api_get_meeting_by_id
 CREATE PROCEDURE api_get_meeting_by_id(_id INT)
 procedure_block:BEGIN
 
-  SELECT *
-  FROM api_meeting
-  WHERE id = _id
+  SELECT 
+    M.id,
+    M.description,
+    M.
+    GROUPCONCAT()
+  FROM api_meeting M
+  JOIN api_meeting_attendence A
+    ON A.meeting_id = M.id
+  WHERE M.id = _id
   ORDER BY 2;
   
 END $api_get_meeting_by_id
@@ -679,6 +687,49 @@ END $api_find_meeting_by_description
 
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS api_add_meeting;
+
+DELIMITER $api_add_meeting
+
+CREATE PROCEDURE api_add_meeting(_user_id INT, _group_id INT, _description VARCHAR(100), _location VARCHAR(200), _start_date DATETIME)
+procedure_block:BEGIN
+  
+  INSERT INTO api_meeting (user_id, group_id, description, location, start_date)
+  VALUES (_user_id, _group_id, _description, _location, _start_date);
+  
+  CALL api_get_meeting_by_id(LAST_INSERT_ID());
+  
+END $api_add_meeting
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS api_update_meeting_attendance;
+
+DELIMITER $api_update_meeting_attendance
+
+CREATE PROCEDURE api_update_meeting_attendance(_meeting_id INT, _user_id INT, _attended BOOL)
+procedure_block:BEGIN
+
+  IF EXISTS(SELECT * FROM api_meeting_attendence WHERE meeting_id = _meeting_id AND user_id = _user_id) THEN
+    BEGIN
+      UPDATE api_meeting_attendence
+      SET attended = _attended
+      WHERE meeting_id = _meeting_id AND user_id = _user_id;
+    END;
+  ELSE
+    BEGIN
+    INSERT INTO api_meeting_attendence (meeting_id, user_id, attended)
+    VALUES (_meeting_id, _user_id, _attended);
+/*     ON DUPLICATE KEY UPDATE attended = _attended; */
+    END;
+  END IF;
+  
+  CALL api_get_meeting_by_id(_meeting_id);
+  
+END $api_update_meeting_attendance
+
+DELIMITER ;
+
 INSERT INTO api_token (user_id, token, date_added) VALUES (1, UUID(), '2222-01-01');
 
 INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no) VALUES ('admin', PASSWORD('nimda'), 'Andre', 'address line ONE', 'address line TWO', 'address CITY', 1, 'cell NO');
@@ -724,7 +775,7 @@ INSERT INTO api_contact (contact_name, contact_no) VALUES ('example contact 1', 
 INSERT INTO api_contact (contact_name, contact_no) VALUES ('example contact 2', '012 345 2222');
 INSERT INTO api_contact (contact_name, contact_no) VALUES ('example contact 3', '012 345 3333');
 
-INSERT INTO api_meeting (user_id, group_id, description, start_date) VALUES (1, 1, 'Test Meeting', '2015-07-01');
+INSERT INTO api_meeting (user_id, group_id, description, location, start_date) VALUES (1, 1, 'Test Meeting', 'Wimpy', '2015-07-01');
 
 INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 1', 'http://fzs.sve-mo.ba/sites/DEFAULT/files/dokumenti-vijesti/sample.pdf');
 INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 2', 'http://www.snee.com/xml/xslt/sample.doc');
