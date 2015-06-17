@@ -575,6 +575,22 @@ END $api_update_user
 
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS api_delete_user;
+
+DELIMITER $api_delete_user
+
+CREATE PROCEDURE api_delete_user (_id INT)
+
+procedure_block:BEGIN
+
+  UPDATE api_user
+  SET active = 0
+  WHERE id = _id;
+ 
+END $api_delete_user
+
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS api_get_user_by_role;
 
 DELIMITER $api_get_user_by_role
