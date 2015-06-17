@@ -149,7 +149,7 @@ CREATE PROCEDURE api_get_contact (_page INT, _size INT)
 procedure_block:BEGIN
 
   SET _page := IF(_page = -1, 0, _page);
-  SET _size := IF(_size = -1, 1000, _page);
+  SET _size := IF(_size = -1, 1000, _size);
   
   SELECT contact_name, contact_no
   FROM api_contact
@@ -168,7 +168,7 @@ CREATE PROCEDURE api_get_publication (_page INT, _size INT)
 procedure_block:BEGIN
 
   SET _page := IF(_page = -1, 0, _page);
-  SET _size := IF(_size = -1, 1000, _page);
+  SET _size := IF(_size = -1, 1000, _size);
   
   SELECT P.description, P.source, G.group_name
   FROM api_publication P
@@ -189,7 +189,7 @@ CREATE PROCEDURE api_find_publication_by_group_id (_group_id INT, _page INT, _si
 procedure_block:BEGIN
 
   SET _page := IF(_page = -1, 0, _page);
-  SET _size := IF(_size = -1, 1000, _page);
+  SET _size := IF(_size = -1, 1000, _size);
   
   SELECT P.description, P.source, G.group_name
   FROM api_publication P
@@ -330,7 +330,7 @@ CREATE PROCEDURE api_find_group (_group_name VARCHAR(200), _page INT, _size INT)
 procedure_block:BEGIN
 
   SET _page := IF(_page = -1, 0, _page);
-  SET _size := IF(_size = -1, 1000, _page);
+  SET _size := IF(_size = -1, 1000, _size);
 
   SELECT *
   FROM api_group
@@ -351,7 +351,7 @@ CREATE PROCEDURE api_get_group (_page INT, _size INT)
 procedure_block:BEGIN
 
   SET _page := IF(_page = -1, 0, _page);
-  SET _size := IF(_size = -1, 1000, _page);
+  SET _size := IF(_size = -1, 1000, _size);
 
   SELECT *
   FROM api_group
@@ -445,7 +445,7 @@ CREATE PROCEDURE api_get_list_by_name (_group_name VARCHAR(50), _page INT, _size
 procedure_block:BEGIN
 
   SET _page := IF(_page = -1, 0, _page);
-  SET _size := IF(_size = -1, 1000, _page);
+  SET _size := IF(_size = -1, 1000, _size);
 
   SELECT V.list_value VALUE, V.list_option TEXT
   FROM api_list L
@@ -456,6 +456,27 @@ procedure_block:BEGIN
   LIMIT _page, _size;
   
 END $api_get_list_by_name
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS api_get_user;
+
+DELIMITER $api_get_user
+
+CREATE PROCEDURE api_get_user(_page INT, _size INT)
+procedure_block:BEGIN
+
+  SET _page := IF(_page = -1, 0, _page);
+  SET _size := IF(_size = -1, 1000, _size);
+
+-- //FIX! exclude password!
+  SELECT *
+  FROM api_user
+  WHERE active = 1
+  ORDER BY 2
+  LIMIT _page, _size;
+  
+END $api_get_user
 
 DELIMITER ;
 
@@ -534,7 +555,7 @@ CREATE PROCEDURE api_get_user_by_role (_role VARCHAR(50), _page INT, _size INT)
 procedure_block:BEGIN
 
   SET _page := IF(_page = -1, 0, _page);
-  SET _size := IF(_size = -1, 1000, _page);
+  SET _size := IF(_size = -1, 1000, _size);
 
   SELECT
     U.id,
