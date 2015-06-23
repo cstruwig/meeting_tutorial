@@ -294,7 +294,7 @@ procedure_block:BEGIN
   SELECT
     token 'token', 
     token_valid_seconds 'expires', 
-    'new' AS 'status';
+    'active' AS 'status';
 END $api_add_token
 
 DELIMITER ;
@@ -326,7 +326,7 @@ procedure_block:BEGIN
     api_token T
   JOIN
     api_user U
-    ON (u.id = T.user_id)
+    ON (U.id = T.user_id)
   WHERE T.token = _token
   AND token_valid_seconds - TIME_TO_SEC(TIMEDIFF(NOW(), T.date_added)) > 0;
     
