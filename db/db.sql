@@ -1,3 +1,4 @@
+/* DATETIME DEFAULT CURRENT_TIMESTAMP */
 
 DROP TABLE IF EXISTS api_user;
 CREATE TABLE api_user (
@@ -12,7 +13,7 @@ CREATE TABLE api_user (
   cell_no VARCHAR(50) NOT NULL,  
   card_no VARCHAR(50) NULL,  
   active BOOL DEFAULT 1,
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_added DATETIME,
   PRIMARY KEY (id),
   KEY user_name (user_name)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - users';
@@ -23,7 +24,7 @@ CREATE TABLE api_token (
   user_id INT(10) NOT NULL,
   token CHAR(36) NOT NULL,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_added DATETIME,
   PRIMARY KEY (id),
   KEY token (token)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - tokens';
@@ -35,7 +36,7 @@ CREATE TABLE api_token_failure (
   PASSWORD VARCHAR(200) NULL,
   token CHAR(36) NULL,
   host_name VARCHAR(200) NULL,
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_added DATETIME,
   PRIMARY KEY (id),
   KEY token (token)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - failed token requests';
@@ -46,7 +47,7 @@ CREATE TABLE api_host (
   user_id INT(3) NOT NULL,
   host_name VARCHAR(100) NOT NULL,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  date_added DATETIME,  
   PRIMARY KEY (id),
   KEY user_id (user_id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Config - authorised hosts';
@@ -61,7 +62,7 @@ CREATE TABLE api_group (
   address_province_code VARCHAR(5) NOT NULL,
   facilitator_id INT(10) NOT NULL,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  date_added DATETIME,  
   PRIMARY KEY (id),
   KEY group_name (group_name)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - groups';
@@ -72,7 +73,7 @@ CREATE TABLE api_user_group (
   user_id INT(10) NOT NULL,
   group_id INT(10) NOT NULL,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  date_added DATETIME,  
   PRIMARY KEY (id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - group members';
 
@@ -81,7 +82,7 @@ CREATE TABLE api_role (
   id INT(10) NOT NULL AUTO_INCREMENT,
   description VARCHAR(30) NOT NULL,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  date_added DATETIME,  
   PRIMARY KEY (id),
   KEY description (description)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Config - roles';
@@ -92,7 +93,7 @@ CREATE TABLE api_user_role (
   user_id INT NOT NULL,
   role_id INT NOT NULL,  
   active BOOL DEFAULT 1,
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_added DATETIME,
   PRIMARY KEY (id),
   KEY user_id (user_id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - users and ther roles';
@@ -106,7 +107,7 @@ CREATE TABLE api_meeting (
   location VARCHAR(200) NOT NULL,
   start_date DATETIME,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  date_added DATETIME,  
   PRIMARY KEY (id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - meeting';
 
@@ -117,7 +118,7 @@ CREATE TABLE api_meeting_attendence (
   user_id INT(10) NOT NULL,
   attended BOOL DEFAULT 0,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  date_added DATETIME,  
   PRIMARY KEY (id),
   KEY meeting_id (meeting_id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Transactional - meeting attendence';
@@ -127,7 +128,7 @@ CREATE TABLE api_list (
   id INT(10) NOT NULL AUTO_INCREMENT,
   list_name VARCHAR(30) NOT NULL,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  date_added DATETIME,  
   PRIMARY KEY (id),
   KEY list_name (list_name)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Config - lists';
@@ -139,7 +140,7 @@ CREATE TABLE api_list_value (
   list_value VARCHAR(20) NOT NULL,
   list_option VARCHAR(20) NOT NULL,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  date_added DATETIME,  
   PRIMARY KEY (id),
   KEY list_id (list_id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Config - list values';
@@ -151,7 +152,7 @@ CREATE TABLE api_contact (
   contact_no VARCHAR(30) NOT NULL,
   user_id INT(3) NULL,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  date_added DATETIME,  
   PRIMARY KEY (id),
   KEY user_id (user_id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Config - app contacts';
@@ -163,7 +164,7 @@ CREATE TABLE api_publication (
   description VARCHAR(300) NOT NULL,
   source VARCHAR(300) NOT NULL,
   active BOOL DEFAULT 1,  
-  date_added DATETIME DEFAULT CURRENT_TIMESTAMP,  
+  date_added DATETIME,  
   PRIMARY KEY (id),
   KEY group_id (group_id)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COMMENT='Config - grpup publications';
@@ -259,7 +260,7 @@ procedure_block:BEGIN
     ON (U.id = T.user_id)
   LEFT JOIN api_host H
     ON (LCASE(H.host_name) = LCASE(_hostName))
-  WHERE (U.user_name = _userName AND U.password = PASSWORD(_password))
+  WHERE (U.user_name = _userName AND U.password = _password)
   AND U.active = 1
   ORDER BY T.date_added DESC
   LIMIT 1;
@@ -316,18 +317,18 @@ procedure_block:BEGIN
   SELECT 
     U.user_name,
     T.date_added,
-    GROUP_CONCAT(H.host_name)
+    ''
   INTO
     user_name,
     date_added,
     configured_hosts
   FROM
     api_token T
-  JOIN api_user U
-    ON (T.user_id = U.id)
-  JOIN api_host H
-    ON (H.user_id = U.id)
-  WHERE (T.token = _token);
+  JOIN
+    api_user U
+    ON (u.id = T.user_id)
+  WHERE T.token = _token
+  AND token_valid_seconds - TIME_TO_SEC(TIMEDIFF(NOW(), T.date_added)) > 0;
     
   /* no record means invalid token */
   IF user_name IS NULL THEN 
@@ -543,7 +544,7 @@ CREATE PROCEDURE api_add_user (_user_name VARCHAR(20), _password VARCHAR(100), _
 procedure_block:BEGIN
 
   INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no, card_no)
-  VALUES (_user_name, PASSWORD(_password), _full_name, _address_line1, _address_line2, _address_city, _address_province_code, _cell_no, _card_no);
+  VALUES (_user_name, _password, _full_name, _address_line1, _address_line2, _address_city, _address_province_code, _cell_no, _card_no);
   
   CALL api_get_user_by_id(LAST_INSERT_ID());
  
@@ -560,7 +561,7 @@ CREATE PROCEDURE api_update_user (_id INT(10), _password VARCHAR(100), _full_nam
 procedure_block:BEGIN
 
   UPDATE api_user
-  SET PASSWORD := IFNULL(PASSWORD(_password), PASSWORD), 
+  SET PASSWORD := IFNULL(_password, PASSWORD), 
   full_name := IFNULL(_full_name, full_name), 
   address_line1 := IFNULL(_address_line1, address_line1), 
   address_line2 := IFNULL(_address_line2, address_line2), 
@@ -770,8 +771,8 @@ DELIMITER ;
 
 INSERT INTO api_token (user_id, token, date_added) VALUES (1, UUID(), '2222-01-01');
 
-INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no) VALUES ('admin', PASSWORD('nimda'), 'Andre', 'address line ONE', 'address line TWO', 'address CITY', 1, 'cell NO');
-INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no) VALUES ('hardus', PASSWORD('hardus'), 'Hardus van der Berg', '486 de jonge str', 'elarduspark', 'PTA', 3, '0716718133');
+INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no, card_no) VALUES ('admin', 'nimda', 'Andre', 'address line ONE', 'address line TWO', 'address CITY', 1, '081 223 1201', 4412);
+INSERT INTO api_user (user_name, PASSWORD, full_name, address_line1, address_line2, address_city, address_province_code, cell_no, card_no) VALUES ('stefan', 'stefan', 'Stefan Marais', '123 Smith str', 'Midrand', 'PTA', 3, '0716718122', 881);
 
 INSERT INTO api_host (user_id, host_name) VALUES (1, '127.0.0.1:3001');
 INSERT INTO api_host (user_id, host_name) VALUES (1, 'localhost:3001');
@@ -818,3 +819,5 @@ INSERT INTO api_meeting (user_id, group_id, description, location, start_date) V
 INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 1', 'http://fzs.sve-mo.ba/sites/DEFAULT/files/dokumenti-vijesti/sample.pdf');
 INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 2', 'http://www.snee.com/xml/xslt/sample.doc');
 INSERT INTO api_publication (group_id, description, source) VALUES (1, 'example publication 3', 'https://www.burningwheel.com/store/media/catalog/product/cache/1/image/9df78eab33525d08d6e5fb8d27136e95/t/a/tableofcontents.jpg');
+
+
